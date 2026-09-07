@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minthouse — Auctions for Collectors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12151A; --surface: #1B2027; --surface-2: #222833; --line: #2C333E;
+    --brass: #C9A227; --brass-soft: #E4C55E; --teal: #3E6B72;
+    --ink: #EDEAE1; --ink-dim: #9AA0AA;
+  }
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{ margin:0; background: var(--bg); color: var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,.display{ font-family:'Fraunces',serif; font-weight:500; letter-spacing:-0.01em; margin:0; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  a{ color:inherit; text-decoration:none; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 32px; }
+
+  header{ position:sticky; top:0; z-index:20; background:rgba(18,21,26,0.88); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .nav{ display:flex; align-items:center; justify-content:space-between; padding:18px 32px; max-width:1180px; margin:0 auto; }
+  .logo{ display:flex; align-items:center; gap:10px; }
+  .logo svg{ width:26px; height:26px; }
+  .logo span{ font-family:'Fraunces',serif; font-size:20px; letter-spacing:0.01em; }
+  .navlinks{ display:none; gap:32px; font-size:14px; color:var(--ink-dim); }
+  @media(min-width:860px){ .navlinks{ display:flex; } }
+  .navlinks a:hover{ color:var(--ink); }
+  .btn{ padding:10px 18px; border-radius:3px; font-size:14px; font-weight:500; border:1px solid var(--brass); color:var(--brass-soft); background:none; cursor:pointer; transition:background .18s ease,color .18s ease; }
+  .btn:hover{ background:var(--brass); color:#17140A; }
+
+  .hero{ border-bottom:1px solid var(--line); padding:72px 0 56px; }
+  .hero-grid{ display:grid; grid-template-columns:1fr; gap:40px; align-items:end; }
+  @media(min-width:900px){ .hero-grid{ grid-template-columns:1.3fr 0.9fr; gap:56px; } }
+  .hero h1{ font-size:clamp(38px,6vw,64px); line-height:1.04; max-width:12ch; }
+  .hero p{ margin-top:20px; max-width:46ch; color:var(--ink-dim); font-size:16px; line-height:1.6; }
+  .hero-cta{ margin-top:28px; display:flex; gap:14px; flex-wrap:wrap; }
+  .btn-solid{ background:var(--brass); color:#17140A; padding:12px 22px; border-radius:3px; font-weight:600; font-size:14px; border:none; cursor:pointer; }
+  .btn-outline{ padding:12px 22px; border-radius:3px; font-size:14px; border:1px solid var(--line); color:var(--ink); background:none; cursor:pointer; }
+  .btn-outline:hover{ border-color:var(--ink-dim); }
+
+  .feature-card{ background:var(--surface); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .feature-art{ height:220px; position:relative; background:radial-gradient(circle at 30% 20%, rgba(201,162,39,0.35), transparent 55%), linear-gradient(160deg,#2B2419 0%,#1B2027 55%,#14181D 100%); }
+  .feature-art::after{ content:""; position:absolute; inset:0; background-image:repeating-linear-gradient(115deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 26px); }
+  .feature-body{ padding:20px 22px 22px; }
+  .feature-tag{ font-size:11px; color:var(--brass-soft); text-transform:uppercase; letter-spacing:0.08em; }
+  .feature-title{ font-size:20px; margin-top:8px; }
+  .feature-row{ display:flex; justify-content:space-between; align-items:baseline; margin-top:16px; padding-top:16px; border-top:1px solid var(--line); }
+  .feature-row .label{ font-size:12px; color:var(--ink-dim); }
+  .feature-row .value{ font-size:18px; }
+
+  .ticker{ border-bottom:1px solid var(--line); background:var(--surface); overflow:hidden; white-space:nowrap; padding:10px 0; }
+  .ticker-track{ display:inline-block; padding-left:100%; animation:scroll 28s linear infinite; font-size:13px; color:var(--ink-dim); }
+  .ticker-track span{ margin-right:48px; }
+  .ticker-track .up{ color:#7FBF8F; }
+  @keyframes scroll{ 0%{transform:translateX(0);} 100%{transform:translateX(-100%);} }
+
+  .section{ padding:64px 0; }
+  .section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:32px; gap:20px; flex-wrap:wrap; }
+  .section-head h2{ font-size:28px; }
+  .section-head p{ color:var(--ink-dim); font-size:14px; max-width:40ch; }
+
+  .filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:28px; }
+  .chip{ padding:7px 14px; border:1px solid var(--line); border-radius:20px; font-size:13px; color:var(--ink-dim); cursor:pointer; }
+  .chip.active{ border-color:var(--brass); color:var(--brass-soft); }
+
+  .grid{ display:grid; grid-template-columns:repeat(1,1fr); gap:22px; }
+  @media(min-width:640px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+  @media(min-width:980px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+
+  .lot{ background:var(--surface); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .lot-art{ height:168px; position:relative; }
+  .lot-art .grade{ position:absolute; top:10px; left:10px; background:rgba(18,21,26,0.75); border:1px solid var(--line); font-size:11px; padding:4px 8px; border-radius:3px; color:var(--brass-soft); }
+  .lot-body{ padding:16px 18px 18px; }
+  .lot-num{ font-size:11px; color:var(--ink-dim); }
+  .lot-title{ font-size:16px; margin-top:6px; line-height:1.3; }
+  .lot-desc{ font-size:13px; color:var(--ink-dim); margin-top:8px; line-height:1.5; }
+  .lot-meta{ display:flex; justify-content:space-between; align-items:baseline; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+  .lot-meta .label{ font-size:11px; color:var(--ink-dim); }
+  .lot-meta .bid{ font-size:16px; }
+  .lot-meta .time{ font-size:12px; color:var(--ink-dim); }
+
+  .art-1{ background:radial-gradient(circle at 70% 30%, rgba(201,162,39,.30), transparent 60%), linear-gradient(150deg,#22201A,#1B2027); }
+  .art-2{ background:radial-gradient(circle at 25% 70%, rgba(62,107,114,.45), transparent 60%), linear-gradient(150deg,#182226,#1B2027); }
+  .art-3{ background:radial-gradient(circle at 60% 20%, rgba(201,162,39,.22), transparent 55%), linear-gradient(150deg,#20191A,#1B2027); }
+  .art-4{ background:radial-gradient(circle at 30% 30%, rgba(120,80,150,.28), transparent 60%), linear-gradient(150deg,#1D1A22,#1B2027); }
+  .art-5{ background:radial-gradient(circle at 75% 65%, rgba(201,162,39,.28), transparent 55%), linear-gradient(150deg,#211D18,#1B2027); }
+  .art-6{ background:radial-gradient(circle at 40% 40%, rgba(62,107,114,.35), transparent 60%), linear-gradient(150deg,#181F22,#1B2027); }
+
+  .bid-form{ display:flex; gap:8px; margin-top:14px; }
+  .bid-input{ flex:1; min-width:0; background:var(--bg); border:1px solid var(--line); border-radius:3px; color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 10px; }
+  .bid-input:focus{ outline:none; border-color:var(--brass); }
+  .bid-submit{ background:var(--brass); color:#17140A; border:none; border-radius:3px; font-weight:600; font-size:13px; padding:0 14px; cursor:pointer; }
+  .bid-submit:hover{ background:var(--brass-soft); }
+  .bid-error{ font-size:12px; color:#D9776A; margin-top:6px; min-height:14px; }
+  .lot.closed .lot-art{ filter:grayscale(0.6) brightness(0.6); }
+  .badge-closed{ background:rgba(18,21,26,0.85); border:1px solid var(--line); color:var(--ink-dim); }
+  .flash{ animation:flashbid 0.6s ease; }
+  @keyframes flashbid{ 0%{background:rgba(201,162,39,0.18);} 100%{background:transparent;} }
+
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--surface-2); border:1px solid var(--brass); color:var(--ink); padding:10px 18px; border-radius:4px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:60; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(10,12,15,0.6); display:none; align-items:center; justify-content:center; z-index:80; padding:20px; }
+  .modal-backdrop.show{ display:flex; }
+  .modal{ background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:28px; width:100%; max-width:360px; }
+  .modal h3{ font-size:20px; margin-bottom:18px; }
+  .modal label{ display:block; font-size:12px; color:var(--ink-dim); margin-bottom:6px; margin-top:14px; }
+  .modal input{ width:100%; background:var(--bg); border:1px solid var(--line); border-radius:3px; color:var(--ink); font-size:14px; padding:10px 12px; }
+  .modal input:focus{ outline:none; border-color:var(--brass); }
+  .modal-actions{ display:flex; gap:10px; margin-top:22px; }
+  .modal-error{ font-size:13px; color:#D9776A; margin-top:10px; }
+  .modal-switch{ font-size:13px; color:var(--ink-dim); margin-top:16px; text-align:center; }
+  .modal-switch a{ color:var(--brass-soft); cursor:pointer; }
+  .modal-close{ position:absolute; top:14px; right:16px; color:var(--ink-dim); cursor:pointer; font-size:20px; background:none; border:none; }
+  .modal{ position:relative; }
+
+  .steps{ display:grid; grid-template-columns:1fr; gap:28px; }
+  @media(min-width:780px){ .steps{ grid-template-columns:repeat(3,1fr); } }
+  .step h3{ font-size:18px; margin-bottom:8px; }
+  .step p{ color:var(--ink-dim); font-size:14px; line-height:1.6; }
+  .step-mark{ font-family:'IBM Plex Mono',monospace; color:var(--brass-soft); font-size:13px; margin-bottom:10px; display:block; }
+
+  .band{ border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:linear-gradient(180deg,var(--surface),var(--bg)); padding:56px 0; text-align:center; }
+  .band h2{ font-size:30px; max-width:20ch; margin:0 auto; }
+  .band p{ color:var(--ink-dim); margin-top:14px; }
+  .band .hero-cta{ justify-content:center; margin-top:26px; }
+
+  footer{ padding:48px 0 32px; }
+  .foot-bottom{ margin-top:20px; padding-top:20px; border-top:1px solid var(--line); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:12px; color:var(--ink-dim); }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 2 L28 9 V23 L16 30 L4 23 V9 Z" stroke="#C9A227" stroke-width="1.6"/>
+        <path d="M16 2 V30 M4 9 L28 23 M28 9 L4 23" stroke="#C9A227" stroke-width="1" opacity="0.55"/>
+      </svg>
+      <span>Minthouse</span>
+    </div>
+    <nav class="navlinks">
+      <a href="#lots">Current lots</a>
+      <a href="#how">How it works</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+    <button class="btn" id="account-btn">Sign in</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>Where serious collections change hands.</h1>
+      <p>Minthouse is a marketplace for graded trading cards, game-worn memorabilia, and rare objects — vetted lots, transparent bidding, and a straight path from gavel to your hands.</p>
+      <div class="hero-cta">
+        <a href="#lots" class="btn-solid">Browse current lots</a>
+        <a href="admin.html" class="btn-outline">Admin dashboard</a>
+      </div>
+    </div>
+    <div class="feature-card" id="feature-slot"></div>
+  </div>
+</section>
+
+<div class="ticker"><div class="ticker-track" id="ticker-track"></div></div>
+
+<section class="section" id="lots">
+  <div class="wrap">
+    <div class="section-head">
+      <div><h2>Current lots</h2><p>A rotating selection across cards, memorabilia, comics, and timepieces.</p></div>
+    </div>
+    <div class="filters" id="filters">
+      <span class="chip active" data-cat="All">All</span>
+      <span class="chip" data-cat="Trading cards">Trading cards</span>
+      <span class="chip" data-cat="Memorabilia">Memorabilia</span>
+      <span class="chip" data-cat="Comics">Comics</span>
+      <span class="chip" data-cat="Timepieces">Timepieces</span>
+      <span class="chip" data-cat="Sneakers">Sneakers</span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head"><div><h2>How Minthouse works</h2><p>From consignment to settlement, every lot follows the same vetted path.</p></div></div>
+    <div class="steps">
+      <div class="step"><span class="step-mark mono">01 — Intake</span><h3>Submit for evaluation</h3><p>Send photos and details of your item. Our specialists confirm authenticity and estimate value before it's listed.</p></div>
+      <div class="step"><span class="step-mark mono">02 — Auction</span><h3>List and bid</h3><p>Lots run on a fixed close with live extensions, so a bid in the final seconds always gets a fair chance to be topped.</p></div>
+      <div class="step"><span class="step-mark mono">03 — Settlement</span><h3>Ship and get paid</h3><p>Winning bidders pay through escrow; sellers are paid once the item is verified on arrival.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="sell">
+  <div class="wrap">
+    <h2>Have something worth auctioning?</h2>
+    <p>Reach out to our team to have your item evaluated for consignment.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-bottom">
+      <span>© 2026 Minthouse. Demo site with placeholder content.</span>
+      <span>Terms · Privacy</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <button class="modal-close" id="modal-close">&times;</button>
+    <h3 id="modal-title">Sign in</h3>
+    <form id="auth-form">
+      <label>Email</label>
+      <input type="email" id="auth-email" required />
+      <label>Password</label>
+      <input type="password" id="auth-password" required minlength="6" />
+      <div class="modal-error" id="auth-error"></div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-solid" style="flex:1">Sign in</button>
+      </div>
+    </form>
+    <div class="modal-switch">
+      <span id="modal-switch-text">Don't have an account? <a id="modal-switch-link">Create one</a></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = ''; // same-origin
+let TOKEN = localStorage.getItem('minthouse_token') || null;
+let CURRENT_USER = null;
+let LOTS = [];
+let activeFilter = 'All';
+let authMode = 'login';
+
+function money(n){ return '$' + Number(n).toLocaleString('en-US'); }
+
+function formatCountdown(ms){
+  if (ms <= 0) return 'Closed';
+  const totalSec = Math.floor(ms/1000);
+  const d = Math.floor(totalSec/86400), h = Math.floor((totalSec%86400)/3600),
+        m = Math.floor((totalSec%3600)/60), s = totalSec%60;
+  if (d>0) return `${d}d ${h}h left`;
+  if (h>0) return `${h}h ${m}m left`;
+  if (m>0) return `${m}m ${s}s left`;
+  return `${s}s left`;
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------- Auth ---------- */
+
+function updateAccountButton(){
+  const btn = document.getElementById('account-btn');
+  btn.textContent = CURRENT_USER ? `Sign out (${CURRENT_USER.email})` : 'Sign in';
+}
+
+async function fetchMe(){
+  if (!TOKEN) return;
+  try{
+    const res = await fetch(API + '/api/auth/me', { headers: { Authorization: 'Bearer ' + TOKEN } });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    CURRENT_USER = data.user;
+  } catch(e){
+    TOKEN = null; CURRENT_USER = null;
+    localStorage.removeItem('minthouse_token');
+  }
+  updateAccountButton();
+}
+
+document.getElementById('account-btn').addEventListener('click', () => {
+  if (CURRENT_USER){
+    TOKEN = null; CURRENT_USER = null;
+    localStorage.removeItem('minthouse_token');
+    updateAccountButton();
+    showToast('Signed out');
+    return;
+  }
+  openAuthModal('login');
+});
+
+function openAuthModal(mode){
+  authMode = mode;
+  document.getElementById('modal-title').textContent = mode === 'login' ? 'Sign in' : 'Create an account';
+  document.getElementById('modal-switch-text').innerHTML = mode === 'login'
+    ? `Don't have an account? <a id="modal-switch-link">Create one</a>`
+    : `Already have an account? <a id="modal-switch-link">Sign in</a>`;
+  document.getElementById('modal-switch-link').addEventListener('click', () => openAuthModal(mode === 'login' ? 'register' : 'login'));
+  document.getElementById('auth-error').textContent = '';
+  document.getElementById('modal-backdrop').classList.add('show');
+}
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-backdrop').classList.remove('show');
+});
+
+document.getElementById('auth-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.textContent = '';
+  try{
+    const res = await fetch(API + '/api/auth/' + (authMode === 'login' ? 'login' : 'register'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Something went wrong.'; return; }
+    TOKEN = data.token; CURRENT_USER = data.user;
+    localStorage.setItem('minthouse_token', TOKEN);
+    updateAccountButton();
+    document.getElementById('modal-backdrop').classList.remove('show');
+    showToast(authMode === 'login' ? 'Signed in' : 'Account created');
+  } catch(e){
+    errEl.textContent = 'Network error. Is the server running?';
+  }
+});
+
+/* ---------- Data loading ---------- */
+
+async function loadLots(){
+  const res = await fetch(API + '/api/lots');
+  const data = await res.json();
+  LOTS = data.lots;
+  renderFeature(); renderTicker(); renderGrid();
+}
+
+/* ---------- Rendering ---------- */
+
+function renderFeature(){
+  const p = LOTS.find(x => x.featured) || LOTS[0];
+  const slot = document.getElementById('feature-slot');
+  if (!p){ slot.innerHTML = ''; return; }
+  slot.innerHTML = `
+    <div class="feature-art"></div>
+    <div class="feature-body">
+      <div class="feature-tag">Lot ${p.lot_no} · ${p.category}</div>
+      <h3 class="feature-title">${p.title} — ${p.grade || ''}</h3>
+      <div class="feature-row">
+        <div><div class="label">Current bid</div><div class="value mono">${money(p.current_bid)}</div></div>
+        <div style="text-align:right"><div class="label">Closes in</div><div class="value mono" id="feature-clock">--</div></div>
+      </div>
+    </div>`;
+}
+
+function renderTicker(){
+  const track = document.getElementById('ticker-track');
+  const items = LOTS.map(p => `<span>Lot ${p.lot_no} — ${p.title} <span class="up">↑ ${money(p.current_bid)}</span></span>`);
+  track.innerHTML = items.concat(items).join('');
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  const list = activeFilter === 'All' ? LOTS : LOTS.filter(p => p.category === activeFilter);
+
+  grid.innerHTML = list.map(p => {
+    const closed = p.status === 'closed';
+    return `
+    <div class="lot ${closed?'closed':''}" data-id="${p.id}">
+      <div class="lot-art ${p.art_class}">
+        <span class="grade ${closed?'badge-closed':''}">${closed?'Closed':(p.grade||'')}</span>
+      </div>
+      <div class="lot-body">
+        <div class="lot-num mono">LOT ${p.lot_no} · ${p.category.toUpperCase()}</div>
+        <div class="lot-title">${p.title}</div>
+        ${p.description ? `<div class="lot-desc">${p.description}</div>` : ''}
+        <div class="lot-meta">
+          <div><div class="label">Current bid · ${p.bid_count} bids</div><div class="bid mono" id="bid-${p.id}">${money(p.current_bid)}</div></div>
+          <div class="time mono" id="time-${p.id}">--</div>
+        </div>
+        ${closed ? '' : `
+        <form class="bid-form" data-id="${p.id}">
+          <input class="bid-input" type="number" step="1" min="${p.current_bid + p.min_increment}" placeholder="${p.current_bid + p.min_increment}" required />
+          <button class="bid-submit" type="submit">Place bid</button>
+        </form>
+        <div class="bid-error" id="err-${p.id}"></div>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.bid-form').forEach(f => f.addEventListener('submit', onBidSubmit));
+}
+
+async function onBidSubmit(e){
+  e.preventDefault();
+  const id = e.currentTarget.getAttribute('data-id');
+  const input = e.currentTarget.querySelector('.bid-input');
+  const errEl = document.getElementById(`err-${id}`);
+  errEl.textContent = '';
+
+  if (!CURRENT_USER){
+    errEl.textContent = 'Sign in to place a bid.';
+    openAuthModal('login');
+    return;
+  }
+
+  const amount = Number(input.value);
+  try{
+    const res = await fetch(`${API}/api/lots/${id}/bids`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + TOKEN },
+      body: JSON.stringify({ amount })
+    });
+    const data = await res.json();
+    if (!res.ok){ errEl.textContent = data.error || 'Could not place bid.'; return; }
+    showToast(data.extended ? `Bid placed — closing time extended (anti-snipe)` : `Bid placed: ${money(amount)}`);
+    // the WebSocket broadcast will re-render the grid for us
+  } catch(err){
+    errEl.textContent = 'Network error. Is the server running?';
+  }
+}
+
+document.getElementById('filters').addEventListener('click', (e) => {
+  const chip = e.target.closest('.chip');
+  if (!chip) return;
+  document.querySelectorAll('#filters .chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeFilter = chip.getAttribute('data-cat');
+  renderGrid();
+});
+
+/* ---------- Live countdown tick ---------- */
+function tick(){
+  const feat = LOTS.find(x => x.featured) || LOTS[0];
+  const fc = document.getElementById('feature-clock');
+  if (fc && feat) fc.textContent = formatCountdown(feat.closes_at - Date.now());
+  LOTS.forEach(p => {
+    const el = document.getElementById(`time-${p.id}`);
+    if (el) el.textContent = formatCountdown(p.closes_at - Date.now());
+  });
+}
+setInterval(tick, 1000);
+
+/* ---------- WebSocket: live updates from other bidders / admin ---------- */
+function connectWS(){
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${proto}//${location.host}/ws`);
+  ws.onmessage = (event) => {
+    const msg = JSON.parse(event.data);
+    if (['bid_placed','lot_updated','lot_created','lot_closed'].includes(msg.type)){
+      const idx = LOTS.findIndex(l => l.id === msg.lot.id);
+      if (idx >= 0) LOTS[idx] = msg.lot; else LOTS.unshift(msg.lot);
+      renderFeature(); renderTicker(); renderGrid(); tick();
+      const card = document.querySelector(`.lot[data-id="${msg.lot.id}"]`);
+      if (card){ card.classList.add('flash'); setTimeout(()=>card.classList.remove('flash'), 650); }
+    }
+    if (msg.type === 'lot_deleted'){
+      LOTS = LOTS.filter(l => l.id !== msg.id);
+      renderGrid(); renderTicker();
+    }
+  };
+  ws.onclose = () => setTimeout(connectWS, 2000); // auto-reconnect
+}
+
+/* ---------- Init ---------- */
+(async function init(){
+  await fetchMe();
+  await loadLots();
+  connectWS();
+  tick();
+})();
+</script>
+</body>
+</html>
