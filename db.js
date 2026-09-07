@@ -50,4 +50,12 @@ CREATE TABLE IF NOT EXISTS bids (
 );
 `);
 
+// Migration: add image_url column if it doesn't exist yet (safe to run
+// every time the app starts — it just fails silently if already added).
+try {
+  db.exec(`ALTER TABLE lots ADD COLUMN image_url TEXT`);
+} catch (e) {
+  // column already exists — nothing to do
+}
+
 module.exports = db;
