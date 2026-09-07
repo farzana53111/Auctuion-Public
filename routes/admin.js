@@ -17,7 +17,7 @@ module.exports = function (broadcast) {
   router.post('/lots', (req, res) => {
     const {
       lot_no, category, title, grade, description,
-      art_class, starting_bid, min_increment, closes_in_minutes, featured
+      art_class, starting_bid, min_increment, closes_in_minutes, featured, image_url
     } = req.body;
 
     if (!lot_no || !category || !title || !starting_bid || !closes_in_minutes) {
@@ -29,13 +29,13 @@ module.exports = function (broadcast) {
     const info = db.prepare(`
       INSERT INTO lots
         (lot_no, category, title, grade, description, art_class, starting_bid,
-         current_bid, min_increment, bid_count, closes_at, status, featured, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'active', ?, ?)
+         current_bid, min_increment, bid_count, closes_at, status, featured, created_at, image_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'active', ?, ?, ?)
     `).run(
       lot_no, category, title, grade || '', description || '',
       art_class || 'art-1', starting_bid, starting_bid,
       min_increment || 25, Date.now() + Number(closes_in_minutes) * 60000,
-      featured ? 1 : 0, Date.now()
+      featured ? 1 : 0, Date.now(), image_url || null
     );
 
     const lot = db.prepare('SELECT * FROM lots WHERE id = ?').get(info.lastInsertRowid);
@@ -47,7 +47,7 @@ module.exports = function (broadcast) {
     const lot = db.prepare('SELECT * FROM lots WHERE id = ?').get(req.params.id);
     if (!lot) return res.status(404).json({ error: 'Lot not found.' });
 
-    const fields = ['category', 'title', 'grade', 'description', 'art_class', 'min_increment', 'featured', 'status'];
+    const fields = ['category', 'title', 'grade', 'description', 'art_class', 'min_increment', 'featured', 'status', 'image_url'];
     const updates = {};
     fields.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
 
