@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minthouse Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12151A; --surface:#1B2027; --surface-2:#222833; --line:#2C333E;
+    --brass:#C9A227; --brass-soft:#E4C55E;
+    --ink:#EDEAE1; --ink-dim:#9AA0AA; --danger:#D9776A; --good:#7FBF8F;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3{ font-family:'Fraunces',serif; font-weight:600; margin:0; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  a{ color:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
+  input, select, textarea{ font-family:inherit; }
+
+  /* ----- login screen ----- */
+  .login-screen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .login-card{ background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:32px; width:100%; max-width:360px; }
+  .login-card h1{ font-size:22px; margin-bottom:6px; }
+  .login-card p.sub{ color:var(--ink-dim); font-size:13px; margin-bottom:24px; }
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12px; color:var(--ink-dim); margin-bottom:6px; }
+  .field input, .field select, .field textarea{
+    width:100%; background:var(--bg); border:1px solid var(--line); border-radius:4px;
+    color:var(--ink); font-size:14px; padding:10px 12px;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:none; border-color:var(--brass); }
+  .btn-solid{ background:var(--brass); color:#17140A; border:none; border-radius:4px; font-weight:600; font-size:14px; padding:11px 18px; width:100%; }
+  .btn-solid:hover{ background:var(--brass-soft); }
+  .btn-outline{ background:none; border:1px solid var(--line); color:var(--ink); border-radius:4px; font-size:13px; padding:9px 14px; }
+  .btn-outline:hover{ border-color:var(--ink-dim); }
+  .btn-danger{ background:none; border:1px solid var(--danger); color:var(--danger); border-radius:4px; font-size:12px; padding:6px 10px; }
+  .btn-danger:hover{ background:var(--danger); color:#17140A; }
+  .error-text{ color:var(--danger); font-size:13px; margin-top:12px; min-height:16px; }
+  .hidden{ display:none !important; }
+
+  /* ----- app shell ----- */
+  .shell{ display:none; min-height:100vh; }
+  .shell.show{ display:flex; }
+  .sidebar{
+    width:220px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--line);
+    padding:24px 18px; display:flex; flex-direction:column; gap:4px;
+  }
+  .sidebar .logo{ display:flex; align-items:center; gap:8px; margin-bottom:28px; }
+  .sidebar .logo span{ font-size:17px; }
+  .navitem{
+    padding:10px 12px; border-radius:4px; font-size:14px; color:var(--ink-dim); cursor:pointer;
+  }
+  .navitem:hover{ color:var(--ink); }
+  .navitem.active{ background:var(--surface-2); color:var(--brass-soft); }
+  .sidebar-bottom{ margin-top:auto; font-size:12px; color:var(--ink-dim); }
+  .sidebar-bottom button{ margin-top:10px; }
+
+  .main{ flex:1; padding:32px 40px; max-width:1100px; }
+  .page{ display:none; }
+  .page.show{ display:block; }
+  .page-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .page-head h2{ font-size:24px; }
+  .page-head p{ color:var(--ink-dim); font-size:13px; margin-top:4px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  th, td{ text-align:left; padding:12px 14px; font-size:13px; border-bottom:1px solid var(--line); }
+  th{ color:var(--ink-dim); font-weight:500; text-transform:uppercase; font-size:11px; letter-spacing:0.05em; }
+  tr:last-child td{ border-bottom:none; }
+  .status-pill{ font-size:11px; padding:3px 8px; border-radius:10px; border:1px solid var(--line); }
+  .status-active{ color:var(--good); border-color:var(--good); }
+  .status-closed{ color:var(--ink-dim); }
+  .row-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  .stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:28px; }
+  .stat-card{ background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:18px 20px; }
+  .stat-card .label{ font-size:12px; color:var(--ink-dim); }
+  .stat-card .value{ font-size:26px; margin-top:6px; font-family:'Fraunces',serif; }
+
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(10,12,15,0.6); display:none; align-items:center; justify-content:center; z-index:80; padding:20px; }
+  .modal-backdrop.show{ display:flex; }
+  .modal{ background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:26px; width:100%; max-width:480px; max-height:85vh; overflow:auto; position:relative; }
+  .modal h3{ font-size:19px; margin-bottom:18px; }
+  .modal-close{ position:absolute; top:14px; right:16px; background:none; border:none; color:var(--ink-dim); font-size:20px; }
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--surface-2); border:1px solid var(--brass); color:var(--ink); padding:10px 18px; border-radius:4px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:90; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media(max-width: 760px){
+    .shell.show{ flex-direction:column; }
+    .sidebar{ width:100%; flex-direction:row; overflow-x:auto; padding:14px; }
+    .sidebar .logo{ display:none; }
+    .sidebar-bottom{ display:none; }
+    .main{ padding:20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Login screen ===== -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <h1>Minthouse Admin</h1>
+    <p class="sub">Sign in with an admin account to manage lots, bids, and users.</p>
+    <form id="login-form">
+      <div class="field"><label>Email</label><input type="email" id="login-email" required /></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" required /></div>
+      <button type="submit" class="btn-solid">Sign in</button>
+      <div class="error-text" id="login-error"></div>
+    </form>
+    <p class="sub" style="margin-top:18px; margin-bottom:0;">Default seed account: admin@minthouse.test / admin123</p>
+  </div>
+</div>
+
+<!-- ===== App shell ===== -->
+<div class="shell" id="shell">
+  <div class="sidebar">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16 2 L28 9 V23 L16 30 L4 23 V9 Z" stroke="#C9A227" stroke-width="1.6"/>
+        <path d="M16 2 V30 M4 9 L28 23 M28 9 L4 23" stroke="#C9A227" stroke-width="1" opacity="0.55"/>
+      </svg>
+      <span>Minthouse</span>
+    </div>
+    <div class="navitem active" data-page="overview">Overview</div>
+    <div class="navitem" data-page="lots">Lots</div>
+    <div class="navitem" data-page="activity">Bid activity</div>
+    <div class="navitem" data-page="users">Users</div>
+    <div class="navitem"><a href="index.html" target="_blank">View live site ↗</a></div>
+    <div class="sidebar-bottom">
+      <div id="admin-email"></div>
+      <button class="btn-outline" id="logout-btn" style="width:100%;">Sign out</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Overview -->
+    <div class="page show" id="page-overview">
+      <div class="page-head"><div><h2>Overview</h2><p>A snapshot of current auction activity.</p></div></div>
+      <div class="stat-grid" id="stat-grid"></div>
+      <h3 style="font-size:16px; margin-bottom:12px;">Recent bids</h3>
+      <table><thead><tr><th>Lot</th><th>Bidder</th><th>Amount</th><th>Time</th></tr></thead>
+        <tbody id="overview-activity"></tbody>
+      </table>
+    </div>
+
+    <!-- Lots -->
+    <div class="page" id="page-lots">
+      <div class="page-head">
+        <div><h2>Lots</h2><p>Create, edit, close, or remove auction lots.</p></div>
+        <button class="btn-solid" style="width:auto;" id="new-lot-btn">+ New lot</button>
+      </div>
+      <table>
+        <thead><tr><th>Lot</th><th>Title</th><th>Category</th><th>Current bid</th><th>Bids</th><th>Status</th><th>Closes</th><th></th></tr></thead>
+        <tbody id="lots-table"></tbody>
+      </table>
+    </div>
+
+    <!-- Activity -->
+    <div class="page" id="page-activity">
+      <div class="page-head"><div><h2>Bid activity</h2><p>The 50 most recent bids across all lots.</p></div></div>
+      <table><thead><tr><th>Lot</th><th>Bidder</th><th>Amount</th><th>Time</th></tr></thead>
+        <tbody id="activity-table"></tbody>
+      </table>
+    </div>
+
+    <!-- Users -->
+    <div class="page" id="page-users">
+      <div class="page-head"><div><h2>Users</h2><p>Everyone registered on Minthouse.</p></div></div>
+      <table><thead><tr><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody id="users-table"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- Lot editor modal -->
+<div class="modal-backdrop" id="lot-modal-backdrop">
+  <div class="modal">
+    <button class="modal-close" id="lot-modal-close">&times;</button>
+    <h3 id="lot-modal-title">New lot</h3>
+    <form id="lot-form">
+      <input type="hidden" id="lot-id" />
+      <div class="two-col">
+        <div class="field"><label>Lot number</label><input id="lot-no" required /></div>
+        <div class="field"><label>Category</label>
+          <select id="lot-category">
+            <option>Trading cards</option><option>Memorabilia</option><option>Comics</option>
+            <option>Timepieces</option><option>Sneakers</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Title</label><input id="lot-title" required /></div>
+      <div class="field"><label>Grade / condition</label><input id="lot-grade" /></div>
+      <div class="field"><label>Description</label><textarea id="lot-description" rows="3"></textarea></div>
+      <div class="field">
+        <label>Image URL <span style="color:var(--ink-dim); font-weight:400;">(optional - link to a photo)</span></label>
+        <input type="url" id="lot-image-url" placeholder="https://example.com/photo.jpg" />
+      </div>
+      <div class="two-col">
+        <div class="field"><label>Starting bid ($)</label><input type="number" id="lot-starting-bid" required /></div>
+        <div class="field"><label>Min increment ($)</label><input type="number" id="lot-increment" value="25" required /></div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label>Closes in (minutes from now)</label><input type="number" id="lot-closes-in" placeholder="60" /></div>
+        <div class="field"><label>Art style</label>
+          <select id="lot-art">
+            <option value="art-1">Brass</option><option value="art-2">Teal</option><option value="art-3">Warm</option>
+            <option value="art-4">Violet</option><option value="art-5">Amber</option><option value="art-6">Cool</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label><input type="checkbox" id="lot-featured" style="width:auto; margin-right:8px;" />Feature on homepage hero</label>
+      </div>
+      <div class="error-text" id="lot-form-error"></div>
+      <button type="submit" class="btn-solid" style="margin-top:6px;">Save lot</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let TOKEN = localStorage.getItem('minthouse_admin_token') || null;
+let ADMIN = null;
+let LOTS = [];
+
+function money(n){ return '$' + Number(n).toLocaleString('en-US'); }
+function fmtDate(ts){ return new Date(ts).toLocaleString(); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+async function api(path, opts = {}){
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {}),
+      ...(opts.headers || {})
+    }
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+/* ---------- Login ---------- */
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  try{
+    const data = await api('/api/auth/login', { method:'POST', body: JSON.stringify({ email, password }) });
+    if (data.user.role !== 'admin'){ errEl.textContent = 'This account does not have admin access.'; return; }
+    TOKEN = data.token; ADMIN = data.user;
+    localStorage.setItem('minthouse_admin_token', TOKEN);
+    enterApp();
+  } catch(err){
+    errEl.textContent = err.message;
+  }
+});
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  TOKEN = null; ADMIN = null;
+  localStorage.removeItem('minthouse_admin_token');
+  document.getElementById('shell').classList.remove('show');
+  document.getElementById('login-screen').classList.remove('hidden');
+});
+
+async function tryResumeSession(){
+  if (!TOKEN) return;
+  try{
+    const data = await api('/api/auth/me');
+    if (data.user.role === 'admin'){ ADMIN = data.user; enterApp(); }
+  } catch(e){ TOKEN = null; }
+}
+
+function enterApp(){
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('shell').classList.add('show');
+  document.getElementById('admin-email').textContent = ADMIN.email;
+  loadAll();
+  connectWS();
+}
+
+/* ---------- Navigation ---------- */
+document.querySelectorAll('.navitem[data-page]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.navitem[data-page]').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+    document.getElementById('page-' + item.dataset.page).classList.add('show');
+  });
+});
+
+/* ---------- Data loading ---------- */
+
+async function loadAll(){
+  await Promise.all([loadLots(), loadActivity(), loadUsers()]);
+  renderOverview();
+}
+
+async function loadLots(){
+  const data = await api('/api/admin/lots');
+  LOTS = data.lots;
+  renderLotsTable();
+}
+
+async function loadActivity(){
+  const data = await api('/api/admin/activity');
+  const rows = data.bids.map(b => `
+    <tr><td>Lot ${b.lot_no} — ${b.title}</td><td>${b.email}</td><td class="mono">${money(b.amount)}</td><td>${fmtDate(b.created_at)}</td></tr>
+  `).join('');
+  document.getElementById('activity-table').innerHTML = rows || `<tr><td colspan="4">No bids yet.</td></tr>`;
+  document.getElementById('overview-activity').innerHTML = data.bids.slice(0,6).map(b => `
+    <tr><td>Lot ${b.lot_no} — ${b.title}</td><td>${b.email}</td><td class="mono">${money(b.amount)}</td><td>${fmtDate(b.created_at)}</td></tr>
+  `).join('') || `<tr><td colspan="4">No bids yet.</td></tr>`;
+}
+
+async function loadUsers(){
+  const data = await api('/api/admin/users');
+  document.getElementById('users-table').innerHTML = data.users.map(u => `
+    <tr><td>${u.email}</td><td>${u.role}</td><td>${fmtDate(u.created_at)}</td></tr>
+  `).join('');
+}
+
+function renderOverview(){
+  const active = LOTS.filter(l => l.status === 'active');
+  const totalValue = LOTS.reduce((sum,l) => sum + l.current_bid, 0);
+  const totalBids = LOTS.reduce((sum,l) => sum + l.bid_count, 0);
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card"><div class="label">Active lots</div><div class="value">${active.length}</div></div>
+    <div class="stat-card"><div class="label">Total lots</div><div class="value">${LOTS.length}</div></div>
+    <div class="stat-card"><div class="label">Total bids placed</div><div class="value">${totalBids}</div></div>
+    <div class="stat-card"><div class="label">Combined current value</div><div class="value">${money(totalValue)}</div></div>
+  `;
+}
+
+function renderLotsTable(){
+  document.getElementById('lots-table').innerHTML = LOTS.map(l => `
+    <tr>
+      <td class="mono">${l.lot_no}</td>
+      <td>${l.title}</td>
+      <td>${l.category}</td>
+      <td class="mono">${money(l.current_bid)}</td>
+      <td>${l.bid_count}</td>
+      <td><span class="status-pill ${l.status === 'active' ? 'status-active' : 'status-closed'}">${l.status}</span></td>
+      <td>${fmtDate(l.closes_at)}</td>
+      <td class="row-actions">
+        <button class="btn-outline" onclick="editLot(${l.id})">Edit</button>
+        ${l.status === 'active' ? `<button class="btn-outline" onclick="closeLot(${l.id})">Close</button>` : ''}
+        <button class="btn-danger" onclick="deleteLot(${l.id})">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+/* ---------- Lot editor modal ---------- */
+
+function openLotModal(lot){
+  document.getElementById('lot-modal-title').textContent = lot ? `Edit lot ${lot.lot_no}` : 'New lot';
+  document.getElementById('lot-id').value = lot ? lot.id : '';
+  document.getElementById('lot-no').value = lot ? lot.lot_no : '';
+  document.getElementById('lot-no').disabled = !!lot; // lot number is fixed after creation
+  document.getElementById('lot-category').value = lot ? lot.category : 'Trading cards';
+  document.getElementById('lot-title').value = lot ? lot.title : '';
+  document.getElementById('lot-grade').value = lot ? (lot.grade || '') : '';
+  document.getElementById('lot-description').value = lot ? (lot.description || '') : '';
+  document.getElementById('lot-starting-bid').value = lot ? lot.starting_bid : '';
+  document.getElementById('lot-starting-bid').disabled = !!lot; // starting bid fixed after creation
+  document.getElementById('lot-increment').value = lot ? lot.min_increment : 25;
+  document.getElementById('lot-closes-in').value = '';
+  document.getElementById('lot-art').value = lot ? lot.art_class : 'art-1';
+  document.getElementById('lot-image-url').value = lot ? (lot.image_url || '') : '';
+  document.getElementById('lot-featured').checked = lot ? !!lot.featured : false;
+  document.getElementById('lot-form-error').textContent = '';
+  document.getElementById('lot-modal-backdrop').classList.add('show');
+}
+
+document.getElementById('new-lot-btn').addEventListener('click', () => openLotModal(null));
+document.getElementById('lot-modal-close').addEventListener('click', () => {
+  document.getElementById('lot-modal-backdrop').classList.remove('show');
+});
+
+window.editLot = function(id){
+  const lot = LOTS.find(l => l.id === id);
+  openLotModal(lot);
+};
+
+window.closeLot = async function(id){
+  if (!confirm('Close this lot now? Bidding will stop immediately.')) return;
+  try{ await api(`/api/admin/lots/${id}/close`, { method:'POST' }); showToast('Lot closed'); await loadLots(); renderOverview(); }
+  catch(e){ showToast(e.message); }
+};
+
+window.deleteLot = async function(id){
+  if (!confirm('Delete this lot and all its bids? This cannot be undone.')) return;
+  try{ await api(`/api/admin/lots/${id}`, { method:'DELETE' }); showToast('Lot deleted'); await loadLots(); renderOverview(); }
+  catch(e){ showToast(e.message); }
+};
+
+document.getElementById('lot-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('lot-id').value;
+  const errEl = document.getElementById('lot-form-error');
+  errEl.textContent = '';
+
+  const payload = {
+    lot_no: document.getElementById('lot-no').value,
+    category: document.getElementById('lot-category').value,
+    title: document.getElementById('lot-title').value,
+    grade: document.getElementById('lot-grade').value,
+    description: document.getElementById('lot-description').value,
+    starting_bid: Number(document.getElementById('lot-starting-bid').value),
+    min_increment: Number(document.getElementById('lot-increment').value),
+    art_class: document.getElementById('lot-art').value,
+    image_url: document.getElementById('lot-image-url').value,
+    featured: document.getElementById('lot-featured').checked
+  };
+  const closesIn = document.getElementById('lot-closes-in').value;
+  if (closesIn) payload.closes_in_minutes = Number(closesIn);
+  else if (!id) payload.closes_in_minutes = 60; // default for new lots
+
+  try{
+    if (id) await api(`/api/admin/lots/${id}`, { method:'PUT', body: JSON.stringify(payload) });
+    else await api('/api/admin/lots', { method:'POST', body: JSON.stringify(payload) });
+    document.getElementById('lot-modal-backdrop').classList.remove('show');
+    showToast(id ? 'Lot updated' : 'Lot created');
+    await loadLots(); renderOverview();
+  } catch(err){
+    errEl.textContent = err.message;
+  }
+});
+
+/* ---------- Live updates ---------- */
+function connectWS(){
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${proto}//${location.host}/ws`);
+  ws.onmessage = async () => { await loadLots(); await loadActivity(); renderOverview(); };
+  ws.onclose = () => setTimeout(connectWS, 2000);
+}
+
+tryResumeSession();
+</script>
+</body>
+</html>
