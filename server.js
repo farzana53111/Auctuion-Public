@@ -8,6 +8,12 @@ const path = require('path');
 
 const authRoutes = require('./routes/auth');
 
+// Auto-seed the database on startup (creates default admin/bidder accounts
+// and starter lots the first time the app runs). This is safe to run every
+// time the server starts, because seed.js checks for existing records and
+// skips anything that's already there.
+require('./seed');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
